@@ -39,15 +39,30 @@ seekrit_token = "\{{ seekrit_token }}"
 "seekrit:secrets/store" = { version = "0.3.0", package = "seekritdev:secrets-spin", registry = "ghcr.io" }
 ```
 
+Declare the import in a `wit/world.wit` and generate bindings from it:
+
+```wit
+package myapp:handler;
+
+world app {
+  import seekrit:secrets/store@0.1.0;
+}
+```
+
 ```rust
-spin_sdk::dependencies!();
+spin_sdk::wit_bindgen::generate!({
+    path: "wit",
+    world: "app",
+    runtime_path: "::spin_sdk::wit_bindgen::rt",
+    generate_all,
+});
 
 use seekrit::secrets::store;
 
 let api_key = match store::get("STRIPE_API_KEY") {
     Ok(Some(v)) => v,
-    Ok(None) => return Ok(Response::new(500, "STRIPE_API_KEY is not in scope")),
-    Err(e) => return Ok(Response::new(503, format!("{e:?}"))),
+    Ok(None) => return Ok(text(500, "STRIPE_API_KEY is not in scope")),
+    Err(e) => return Ok(text(503, format!("{e:?}"))),
 };
 ```
 
@@ -92,7 +107,7 @@ Never put the token in `component.environment` or compile it into a component:
 Spin's manifest expressions do not cover `environment`, so it could only hold a
 literal, and Spin applications are pushed to registries.
 
-## Two Spin-specific notes
+## Three Spin-specific notes
 
 **Use the `secrets-spin` package.** The same component is also published as
 `seekritdev:secrets`, built against `wasi:config/store@0.2.0-draft` for other
@@ -103,13 +118,24 @@ unrelated import names and the wrong one fails at instantiation.
 **`dependencies_inherit_configuration` is required.** Spin grants a dependency
 none of the component's permissions by default, so without it the seekrit
 component can neither make its outbound call nor read the variable holding its
-token.
+token. The app still starts; the first request returns `not configured`.
+
+**`spin_sdk::dependencies!()` does not generate bindings for this component.**
+It generates from the `root` world of the `spin-dependencies.wit` that
+`spin build` writes, and `one_import` in `crates/dependency-wit` selects that
+world's interface by bare name. This component imports `wasi:config/store` and
+exports `seekrit:secrets/store`, both named `store`, so the match lands on the
+wasi one and you get `cannot find module or crate seekrit`. Generate from your
+own `wit/` as shown above — composition is unaffected, since Spin composes
+against the real component imports rather than that file.
 
 ## Caching
 
 The decrypted set is memoized per component instance. Spin instantiates per
 request, so the cache holds for one request and nothing survives it — a rotated
 secret is picked up on the next request. Failures are never cached.
+
+Verified against Spin 4.1.0.
 
 Documentation: [seekrit.dev/docs/guides/spin](https://seekrit.dev/docs/guides/spin).
 Also published for wasmCloud, wasmtime, and other WASI 0.2 hosts —
