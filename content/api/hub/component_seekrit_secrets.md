@@ -14,7 +14,7 @@ last_updated = "2026-09-14T00:00:00Z"
 spin_version = ">=v3.0"
 summary = "A dependency component that resolves and decrypts secrets inside the Wasm sandbox, so your component imports an interface instead of holding a credential."
 url = "https://seekrit.dev/docs/guides/spin"
-keywords = "secrets, credentials, api keys, encryption, wasi-config, component dependencies, vault, rust"
+keywords = "secrets, credentials, api keys, encryption, wasi-config, component dependencies, zero knowledge, rust"
 
 ---
 

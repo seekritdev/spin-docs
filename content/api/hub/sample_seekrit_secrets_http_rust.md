@@ -14,7 +14,7 @@ last_updated = "2026-09-14T00:00:00Z"
 spin_version = ">=v3.0"
 summary = "A Rust HTTP component that reads an API key at request time from a dependency component, with no credential in the manifest, the source, or the built Wasm."
 url = "https://seekrit.dev/docs/guides/spin"
-keywords = "secrets, api keys, http, rust, component dependencies, wasi-config, variables, vault"
+keywords = "secrets, api keys, http, rust, component dependencies, wasi-config, variables, encryption"
 
 ---
 
@@ -124,9 +124,10 @@ in scope: DATABASE_URL, STRIPE_API_KEY
 STRIPE_API_KEY: 32 bytes
 ```
 
-For a deployment, point `seekrit_token` at a variables provider in
-`runtime-config.toml` — Vault or Azure Key Vault — and nothing in the component
-changes.
+For a deployment, declare a Spin variables provider in `runtime-config.toml`
+and point `seekrit_token` at it; nothing in the component or the manifest
+changes. What that provider holds is one revocable, read-only token scoped to a
+single environment — not the secrets.
 
 ## What is worth copying from this
 
