@@ -57,30 +57,16 @@ command = "cargo build --target wasm32-wasip2 --release"
 watch = ["src/**/*.rs", "Cargo.toml"]
 ```
 
-## wit/world.wit
-
-```wit
-package seekrit:spin-example;
-
-world app {
-  import seekrit:secrets/store@0.1.0;
-}
-```
-
 ## src/lib.rs
 
 ```rust
 use spin_sdk::http::{IntoResponse, Request, Response};
 use spin_sdk::http_service;
 
-// Bindings for the interface this component imports. Spin plugs the dependency
-// into it at load time, so nothing here names a package or a registry.
-spin_sdk::wit_bindgen::generate!({
-    path: "wit",
-    world: "app",
-    runtime_path: "::spin_sdk::wit_bindgen::rt",
-    generate_all,
-});
+// Bindings for the interface named in `[component.app.dependencies]`. Spin
+// plugs the dependency into it at load time, so nothing here names a package
+// or a registry.
+spin_sdk::dependencies!();
 
 use seekrit::secrets::store;
 
@@ -145,12 +131,6 @@ needs, and three manifest details make or break it:
 - Secrets belong in `[component.*.variables]`, not `component.*.environment` —
   manifest expressions are not supported in `environment`, so it can only hold a
   literal.
-
-One caveat if the dependency's exported interface shares a short name with one
-of its own imports, as this one does (`seekrit:secrets/store` and
-`wasi:config/store`): `spin_sdk::dependencies!()` selects by bare name and
-generates the wrong one. Declaring the import in your own `wit/` and calling
-`spin_sdk::wit_bindgen::generate!`, as above, works regardless.
 
 Verified against Spin 4.1.0.
 
